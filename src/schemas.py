@@ -58,3 +58,10 @@ class ReservationRead(ReservationCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+
+
+class SeatStatusRead(BaseModel):
+    id: int
+    row: int
+    number: int
+    status: str

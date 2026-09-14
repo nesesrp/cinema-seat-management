@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -40,6 +40,7 @@ class Session(Base):
 
 class Reservation(Base):
     __tablename__ = "reservations"
+    __table_args__ = (UniqueConstraint("session_id", "seat_id", name="uq_session_seat"),)
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False)
