@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -11,7 +12,11 @@ router = APIRouter(prefix="/halls", tags=["halls"])
 def create_hall(hall: schemas.HallCreate, db: Session = Depends(get_db)):
     db_hall = models.Hall(name=hall.name)
     db.add(db_hall)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Hall name already exists")
     db.refresh(db_hall)
     return db_hall
 
