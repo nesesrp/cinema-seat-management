@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -36,3 +36,13 @@ def create_reservation(reservation: schemas.ReservationCreate, db: Session = Dep
 @router.get("/", response_model=list[schemas.ReservationRead])
 def list_reservations(db: Session = Depends(get_db)):
     return db.query(models.Reservation).all()
+
+
+@router.delete("/{reservation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_reservation(reservation_id: int, db: Session = Depends(get_db)):
+    reservation = db.get(models.Reservation, reservation_id)
+    if reservation is None:
+        raise HTTPException(status_code=404, detail="Reservation not found")
+
+    db.delete(reservation)
+    db.commit()
