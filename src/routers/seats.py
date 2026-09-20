@@ -22,9 +22,24 @@ def _get_seat_or_404(hall_id: int, seat_id: int, db: Session) -> models.Seat:
     return seat
 
 
+def _raise_if_position_taken(
+    db: Session, hall_id: int, row: int, number: int, exclude_seat_id: int | None = None
+) -> None:
+    query = db.query(models.Seat).filter(
+        models.Seat.hall_id == hall_id,
+        models.Seat.row == row,
+        models.Seat.number == number,
+    )
+    if exclude_seat_id is not None:
+        query = query.filter(models.Seat.id != exclude_seat_id)
+    if query.first():
+        raise HTTPException(status_code=409, detail="A seat with this row and number already exists")
+
+
 @router.post("/", response_model=schemas.SeatRead)
 def create_seat(hall_id: int, seat: schemas.SeatCreate, db: Session = Depends(get_db)):
     _get_hall_or_404(hall_id, db)
+    _raise_if_position_taken(db, hall_id, seat.row, seat.number)
 
     db_seat = models.Seat(hall_id=hall_id, row=seat.row, number=seat.number)
     db.add(db_seat)
@@ -77,18 +92,7 @@ def update_seat(
 ):
     db_seat = _get_seat_or_404(hall_id, seat_id, db)
 
-    duplicate = (
-        db.query(models.Seat)
-        .filter(
-            models.Seat.hall_id == hall_id,
-            models.Seat.row == seat.row,
-            models.Seat.number == seat.number,
-            models.Seat.id != seat_id,
-        )
-        .first()
-    )
-    if duplicate:
-        raise HTTPException(status_code=409, detail="A seat with this row and number already exists")
+    _raise_if_position_taken(db, hall_id, seat.row, seat.number, exclude_seat_id=seat_id)
 
     db_seat.row = seat.row
     db_seat.number = seat.number

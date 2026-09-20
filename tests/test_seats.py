@@ -85,8 +85,27 @@ def test_delete_reserved_seat_is_rejected(client):
     seat = _create_seat(client, hall["id"])
     session = client.post(
         "/sessions/",
-        json={"movie_name": "Movie", "start_time": "2026-09-14T18:00:00", "hall_id": hall["id"]},
+        json={"movie_name": "Movie", "start_time": "2099-09-14T18:00:00", "hall_id": hall["id"]},
     ).json()
     client.post("/reservations/", json={"session_id": session["id"], "seat_id": seat["id"]})
 
     assert client.delete(f"/halls/{hall['id']}/seats/{seat['id']}").status_code == 409
+
+
+def test_create_seat_at_taken_position_is_rejected(client):
+    hall = _create_hall(client)
+    _create_seat(client, hall["id"], row=1, number=1)
+
+    response = client.post(f"/halls/{hall['id']}/seats/", json={"row": 1, "number": 1})
+
+    assert response.status_code == 409
+
+
+def test_same_seat_position_in_different_halls_is_allowed(client):
+    hall_a = _create_hall(client, name="Hall A")
+    hall_b = _create_hall(client, name="Hall B")
+    _create_seat(client, hall_a["id"], row=1, number=1)
+
+    response = client.post(f"/halls/{hall_b['id']}/seats/", json={"row": 1, "number": 1})
+
+    assert response.status_code == 200

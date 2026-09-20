@@ -6,10 +6,10 @@ def _create_seat(client, hall_id, row=1, number=1):
     return client.post(f"/halls/{hall_id}/seats/", json={"row": row, "number": number}).json()
 
 
-def _create_session(client, hall_id, movie_name="Test Movie"):
+def _create_session(client, hall_id, movie_name="Test Movie", start_time="2099-09-14T18:00:00"):
     return client.post(
         "/sessions/",
-        json={"movie_name": movie_name, "start_time": "2026-09-14T18:00:00", "hall_id": hall_id},
+        json={"movie_name": movie_name, "start_time": start_time, "hall_id": hall_id},
     ).json()
 
 
@@ -124,7 +124,7 @@ def test_filter_reservations_by_session_and_seat(client):
     seat_1 = _create_seat(client, hall["id"], row=1, number=1)
     seat_2 = _create_seat(client, hall["id"], row=1, number=2)
     session_1 = _create_session(client, hall["id"], movie_name="Movie 1")
-    session_2 = _create_session(client, hall["id"], movie_name="Movie 2")
+    session_2 = _create_session(client, hall["id"], movie_name="Movie 2", start_time="2099-09-14T22:00:00")
     r1 = client.post("/reservations/", json={"session_id": session_1["id"], "seat_id": seat_1["id"]}).json()
     r2 = client.post("/reservations/", json={"session_id": session_1["id"], "seat_id": seat_2["id"]}).json()
     r3 = client.post("/reservations/", json={"session_id": session_2["id"], "seat_id": seat_1["id"]}).json()
