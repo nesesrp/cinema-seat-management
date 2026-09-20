@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class HallBase(BaseModel):
@@ -8,6 +8,10 @@ class HallBase(BaseModel):
 
 
 class HallCreate(HallBase):
+    pass
+
+
+class HallUpdate(HallBase):
     pass
 
 
@@ -26,6 +30,15 @@ class SeatCreate(SeatBase):
     pass
 
 
+class SeatUpdate(SeatBase):
+    pass
+
+
+class SeatBulkCreate(BaseModel):
+    rows: int = Field(ge=1, le=50)
+    seats_per_row: int = Field(ge=1, le=50)
+
+
 class SeatRead(SeatBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -40,6 +53,10 @@ class SessionBase(BaseModel):
 
 class SessionCreate(SessionBase):
     hall_id: int
+
+
+class SessionUpdate(SessionBase):
+    pass
 
 
 class SessionRead(SessionBase):

@@ -34,8 +34,17 @@ def create_reservation(reservation: schemas.ReservationCreate, db: Session = Dep
 
 
 @router.get("/", response_model=list[schemas.ReservationRead])
-def list_reservations(db: Session = Depends(get_db)):
-    return db.query(models.Reservation).all()
+def list_reservations(
+    session_id: int | None = None,
+    seat_id: int | None = None,
+    db: Session = Depends(get_db),
+):
+    query = db.query(models.Reservation)
+    if session_id is not None:
+        query = query.filter(models.Reservation.session_id == session_id)
+    if seat_id is not None:
+        query = query.filter(models.Reservation.seat_id == seat_id)
+    return query.all()
 
 
 @router.delete("/{reservation_id}", status_code=status.HTTP_204_NO_CONTENT)

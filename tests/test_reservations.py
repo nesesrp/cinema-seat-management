@@ -117,3 +117,25 @@ def test_seat_can_be_reserved_again_after_cancellation(client):
     )
 
     assert response.status_code == 200
+
+
+def test_filter_reservations_by_session_and_seat(client):
+    hall = _create_hall(client)
+    seat_1 = _create_seat(client, hall["id"], row=1, number=1)
+    seat_2 = _create_seat(client, hall["id"], row=1, number=2)
+    session_1 = _create_session(client, hall["id"], movie_name="Movie 1")
+    session_2 = _create_session(client, hall["id"], movie_name="Movie 2")
+    r1 = client.post("/reservations/", json={"session_id": session_1["id"], "seat_id": seat_1["id"]}).json()
+    r2 = client.post("/reservations/", json={"session_id": session_1["id"], "seat_id": seat_2["id"]}).json()
+    r3 = client.post("/reservations/", json={"session_id": session_2["id"], "seat_id": seat_1["id"]}).json()
+
+    by_session = client.get("/reservations/", params={"session_id": session_1["id"]}).json()
+    by_seat = client.get("/reservations/", params={"seat_id": seat_1["id"]}).json()
+    by_both = client.get(
+        "/reservations/", params={"session_id": session_1["id"], "seat_id": seat_1["id"]}
+    ).json()
+
+    assert sorted(r["id"] for r in by_session) == sorted([r1["id"], r2["id"]])
+    assert sorted(r["id"] for r in by_seat) == sorted([r1["id"], r3["id"]])
+    assert [r["id"] for r in by_both] == [r1["id"]]
+    assert len(client.get("/reservations/").json()) == 3
